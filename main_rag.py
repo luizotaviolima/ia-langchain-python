@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import TextLoader, PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.prompts import ChatPromptTemplate
@@ -17,14 +17,22 @@ model = ChatOpenAI(
     )
 
 embeddings = OpenAIEmbeddings()
-document = TextLoader(
-    "documentos/GTB_gold_Nov23.txt",
-    encoding="utf-8"
-    ).load()
+
+files = [
+    "documentos\GTB_standard_Nov23.pdf", 
+    "documentos\GTB_gold_Nov23.pdf",
+    "documentos\GTB_platinum_Nov23.pdf"
+    ]
+
+documents = sum(
+    [
+        PyPDFLoader(file).load() for file in files
+        ], []
+)
 
 parts = RecursiveCharacterTextSplitter(
     chunk_size=1000, chunk_overlap=100
-    ).split_documents(document)
+    ).split_documents(documents)
 
 dados_recuperados = FAISS.from_documents(
     parts, embeddings
@@ -45,4 +53,4 @@ def anwer_query(question:str):
     return chain.invoke({
         "query": question, "context": context})
 
-print(anwer_query("Como devo proceder caso tenha um item roubado?"))
+print(anwer_query("Como devo proceder caso tenha um item comprado roubado e caso eu tenha o cartão Platinum?"))
